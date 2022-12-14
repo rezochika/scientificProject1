@@ -7,10 +7,12 @@ Original file is located at
     https://colab.research.google.com/drive/1b3CUJuDOmPmNdZFH3LQDmt5F0K3FZhqD
 """
 
-import tensorflow as tf
 import os
-import pandas as pd
+
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import tensorflow as tf
 from keras import Sequential
 from keras.callbacks import ModelCheckpoint
 from keras.engine.input_layer import InputLayer
@@ -19,8 +21,6 @@ from keras.losses import MeanSquaredError
 from keras.metrics import RootMeanSquaredError
 from keras.optimizers import Adam
 from keras.saving.save import load_model
-import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error as mse
 
 from plot_predictions import plot_predictions1
 
