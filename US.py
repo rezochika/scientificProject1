@@ -22,7 +22,10 @@ def dftoXy1(df, window_size=5):
     ln = len(df_as_np[0])
     for i in range(len(df_as_np) - window_size):
         row = [r for r in df_as_np[i+1:i + window_size+1]]
-        X.append(row)
+        rr = []
+        for r in row:
+            rr.append(np.delete(r, ln-1))
+        X.append(rr)
         label = df_as_np[i + window_size][ln - 1]
         y.append(label)
     return np.array(X), np.array(y)
