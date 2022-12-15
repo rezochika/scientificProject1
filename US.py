@@ -15,6 +15,17 @@ def dftoXy(df, window_size=5):
         y.append(label)
     return np.array(X), np.array(y)
 
+def dftoXy1(df, window_size=5):
+    df_as_np = df.to_numpy()
+    X = []
+    y = []
+    ln = len(df_as_np[0])
+    for i in range(len(df_as_np) - window_size):
+        row = [r for r in df_as_np[i+1:i + window_size+1]]
+        X.append(row)
+        label = df_as_np[i + window_size][ln - 1]
+        y.append(label)
+    return np.array(X), np.array(y)
 
 def plot_predictions1(model, X, y, label1, label2, title, start=0, end=100):
     predictions = model.predict(X).flatten()
@@ -27,6 +38,11 @@ def plot_predictions1(model, X, y, label1, label2, title, start=0, end=100):
     plt.show()
     return df, err
 
+def normalizeArray(X):
+    m = np.mean(X)
+    s = np.std(X)
+    X = (X - m) / s
+    return X
 
 def plot_predictions(model, X, y, label1, label2, title, mean, std, start=0, end=100):
     predictions = model.predict(X).flatten()
