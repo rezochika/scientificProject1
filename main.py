@@ -23,7 +23,48 @@ from keras.optimizers import Adam
 from keras.saving.save import load_model
 
 from plot_predictions import plot_predictions1
+import US as us
 
+WINDOW_SIZE = 20
+df1 = pd.read_csv(r'/Users/rezochikashua/Data/TbilisiData.csv')
+df1.index = pd.to_datetime(df1['Date'], format='%m/%d/%Y')
+cons = df1['c'][2000:]
+
+meann = np.mean(cons)
+stdd = np.std(cons)
+print(meann, stdd)
+cons = (cons - meann) / stdd
+# plt.plot(cons)
+# plt.show()
+
+X1, y1 = us.dftoXy(cons, WINDOW_SIZE)
+
+print(X1.shape)
+print(y1.shape)
+
+X_train1, y_train1 = X1[:1800], y1[0:1800]
+X_val1, y_val1 = X1[2000:], y1[2000:]
+X_test1, y_test1 = X1[2000:], y1[2000:]
+print(X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape)
+
+model1 = Sequential()
+model1.add(InputLayer((WINDOW_SIZE, 1)))
+model1.add(LSTM(64))
+model1.add(Dense(8, 'relu'))
+model1.add(Dense(1, 'linear'))
+
+model1.summary()
+
+cp1 = ModelCheckpoint('modelTbilisi/', monitor='val_loss', save_best_only=True)
+model1.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=0.01), metrics=[RootMeanSquaredError()])
+
+model1.fit(X_train1, y_train1, validation_data=(X_val1, y_val1), epochs=1000, callbacks=[cp1])
+model1 = load_model('modelTbilisi/')
+# print(us.plot_predictions(model1, X_train1, y_train1, 'Train Predictions', 'Actuals', 'model1', meann, stdd, start=1300, end=1310))
+# print(us.plot_predictions1(model1, X_val1, y_val1, 'Val Predictions', 'Actuals', 'model1', start=0, end=100))
+print(us.plot_predictions(model1, X_test1, y_test1, 'Test Predictions', 'Actuals', 'model1', meann, stdd, start=0, end=135))
+
+exit(0)
 zip_path = tf.keras.utils.get_file(
     origin='https://storage.googleapis.com/tensorflow/tf-keras-datasets/jena_climate_2009_2016.csv.zip',
     fname='jena_climate_2009_2016.csv.zip',
@@ -173,7 +214,6 @@ def preprocess(X):
 preprocess(X2_train)
 preprocess(X2_val)
 preprocess(X2_test)
-
 
 model4 = Sequential()
 model4.add(InputLayer((6, 5)))
