@@ -4,3 +4,4 @@ pandas
 keras
 matplotlib
 scikit-learn
+tensorflow-gpu

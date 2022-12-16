@@ -6,16 +6,25 @@ from keras.engine.input_layer import InputLayer
 from keras.layers import LSTM, Dense
 from keras.losses import MeanSquaredError
 from keras.metrics import RootMeanSquaredError
-from keras.optimizers import Adam
+from keras.optimizer_v2.adam import Adam
 from keras.saving.save import load_model
+import absl.logging
+
+from ir_finder import LRFinder
+
+absl.logging.set_verbosity(absl.logging.ERROR)
 
 import US
 import US as us
 
-WINDOW_SIZE = 7
-df1 = pd.read_csv(r'/Users/rezochikashua/Data/TbilisiData.csv')
+ws = 7
+lr = 0.008886502
+# 0.011353
+ep = 1000
+df1 = pd.read_csv(r'C:\Users\rezoc\OneDrive\Documents\TbilisiData.csv')
 df1.index = pd.to_datetime(df1['Date'], format='%m/%d/%Y')
-cons = df1[500:].loc[:, ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'dhdd13', 'hdd1t', 'Troloff', 'mx2', 'mn4', 'dcy', 'c7', 'cy', 'c']]
+cons = df1[500:].loc[:,
+       ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'dhdd13', 'hdd1t', 'Troloff', 'mx2', 'mn4', 'dcy', 'c7', 'cy', 'c']]
 
 meann = np.mean(cons['c'])
 stdd = np.std(cons['c'])
@@ -25,27 +34,27 @@ cons['cy'] = (cons['cy'] - meann) / stdd
 cons['c7'] = (cons['c7'] - meann) / stdd
 
 for col in cons.columns:
-    if col not in ['c', 'cy', 'c7']: cons[col] = US.normalizeArray(cons[col])
+    if col not in ['c', 'cy', 'c7']:
+        cons[col] = US.normalizeArray(cons[col])
 
 print(cons.head(10))
 
 # plt.plot(cons)
 # plt.show()
 
-X1, y1 = us.dftoXy1(cons, WINDOW_SIZE)
+X1, y1 = us.dftoXy1(cons, ws)
 
 print(X1.shape)
 print(y1.shape)
-print(X1)
-print(y1)
+
 dataL = len(y1)
 testL = 7
-X_train1, y_train1 = X1[0:dataL-testL-testL], y1[0:dataL-testL-testL]
-X_val1, y_val1 = X1[dataL-testL-testL:dataL-testL], y1[dataL-testL-testL:dataL-testL]
-X_test1, y_test1 = X1[dataL-30:], y1[dataL-30:]
+X_train1, y_train1 = X1[0:dataL - testL - testL], y1[0:dataL - testL - testL]
+X_val1, y_val1 = X1[dataL - testL - testL:dataL - testL], y1[dataL - testL - testL:dataL - testL]
+X_test1, y_test1 = X1[dataL - 7:], y1[dataL - 7:]
 print(X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape)
 neurs = len(X_train1[0][0])
-
+print(X_test1[0])
 # model1 = Sequential()
 # model1.add(InputLayer((WINDOW_SIZE, neurs)))
 # model1.add(LSTM(64))
@@ -65,7 +74,7 @@ neurs = len(X_train1[0][0])
 
 
 model7 = Sequential()
-model7.add(InputLayer((WINDOW_SIZE, neurs)))
+model7.add(InputLayer((ws, neurs)))
 model7.add(LSTM(32, return_sequences=True))
 model7.add(LSTM(64))
 model7.add(Dense(8, 'relu'))
@@ -73,11 +82,25 @@ model7.add(Dense(1, 'linear'))
 model7.summary()
 
 cp7 = ModelCheckpoint('model7/', save_best_only=True, monitor='val_loss')
-model7.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=0.01), metrics=[RootMeanSquaredError()])
+model7.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=lr), metrics=[RootMeanSquaredError()])
 
-model7.fit(X_train1, y_train1, validation_data=(X_val1, y_val1), epochs=1000, callbacks=[cp7])
+# lr_finder = LRFinder(model7)
+# lr_finder.find(X_train1, y_train1, 0.0005, 0.1, 32, ep)
+# lr_finder.plot_loss()
+# lr_finder.plot_loss_change(sma=20, n_skip_beginning=20, n_skip_end=5, y_lim=(-0.02, 0.01))
+# print(float(model7.optimizer.lr))
+# # print(lr_finder.best_lr, lr_finder.best_loss)
+# exit()
+model7.fit(X_train1, y_train1, validation_data=(X_val1, y_val1), epochs=ep, callbacks=[cp7])
 
 model7 = load_model('model7/')
-print(us.plot_predictions(model7, X_test1, y_test1, 'Test Predictions', 'Actuals', 'model7', meann, stdd, start=0,
-                          end=135))
+xP = np.array([X_test1[0], X_test1[1], X_test1[2], X_test1[3]])
+print(xP)
+print(xP.shape)
+yP = model7.predict(xP) * stdd + meann
+print(yP)
+print(us.plot_predictions(model7, X_test1, y_test1, 'Test Predictions', 'Actuals', 'model7', meann, stdd,
+                          float(model7.optimizer.lr), ep, ws,
+                          start=0,
+                          end=100))
 exit(0)
