@@ -48,7 +48,7 @@ def normalizeArray(X):
     m = np.mean(X)
     s = np.std(X)
     X = (X - m) / s
-    return X
+    return X, m, s
 
 
 def plot_predictions(model, X, y, label1, label2, title, mean, std,lr, ep, ws, start=0, end=100):
