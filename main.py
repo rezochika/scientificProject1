@@ -1,10 +1,12 @@
+import json
+
 import numpy as np
 import pandas as pd
 from keras import Sequential
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.engine.input_layer import InputLayer
 from keras.layers import LSTM, Dense
-from keras.losses import MeanSquaredError, mean_absolute_percentage_error
+from keras.losses import MeanSquaredError
 from keras.metrics import RootMeanSquaredError
 from keras.optimizer_v2.adam import Adam
 from keras.saving.save import load_model
@@ -23,33 +25,44 @@ lr = 0.008886502
 
 # 0.011353
 ep = 2000
-df1 = pd.read_csv(r'C:\Users\rezoc\OneDrive\Documents\TbilisiData.csv')
+df = pd.read_csv(r'Data\TbilisiData.csv')
+df1 = pd.read_csv(r'Data\TbilisiFore.csv')
+df['Troloff2'] = df['Troloff'] ** 2
+df.index = pd.to_datetime(df['Date'], format='%m/%d/%Y')
 df1.index = pd.to_datetime(df1['Date'], format='%m/%d/%Y')
-cons = df1[500:].loc[:,
-       ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'mx2', 'mn4', 'dcy', 'c7', 'cy', 'c']]
 
-meann = np.mean(cons['c'])
-stdd = np.std(cons['c'])
+TestData = df[500:].loc[:,
+           ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7', 'cy', 'c']]
+
+
+ForecastData = df1.loc[:,
+               ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'mx2', 'mn4']]
+
+meann = np.mean(TestData['c'])
+stdd = np.std(TestData['c'])
 print(meann, stdd)
-cons['c'] = (cons['c'] - meann) / stdd
-cons['cy'] = (cons['cy'] - meann) / stdd
-cons['c7'] = (cons['c7'] - meann) / stdd
+TestData['c'] = (TestData['c'] - meann) / stdd
+TestData['cy'] = (TestData['cy'] - meann) / stdd
+TestData['c7'] = (TestData['c7'] - meann) / stdd
 means = {'c': [meann, stdd]}
-for col in cons.columns:
+for col in TestData.columns:
     if col not in ['c', 'cy', 'c7']:
-        cons[col], m, s = US.normalizeArray(cons[col])
+        TestData[col], m, s = US.normalizeArray(TestData[col])
         means[col] = [m, s]
-print(means)
 
-X1, y1 = us.dftoXy1(cons, ws)
+for col in ForecastData.columns:
+    ForecastData[col] = (ForecastData[col] - means[col][0]) / means[col][0]
+
+
+X1, y1 = us.dftoXy1(TestData, ws)
 
 print(X1.shape)
 print(y1.shape)
 
 dataL = len(y1)
-testL = 4
-X_train1, y_train1 = X1[0:dataL-testL], y1[0:dataL-testL]
-X_val1, y_val1 = X1[dataL - testL - testL:dataL - testL], y1[dataL - testL - testL:dataL - testL]
+testL = 7
+X_train1, y_train1 = X1[0:dataL - testL], y1[0:dataL - testL]
+X_val1, y_val1 = X1[dataL - testL:], y1[dataL - testL:]
 X_test1, y_test1 = X1[dataL - testL:], y1[dataL - testL:]
 print(X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape)
 neurs = len(X_train1[0][0])
@@ -64,7 +77,7 @@ model7.add(Dense(16, 'relu'))
 model7.add(Dense(1, 'linear'))
 model7.summary()
 
-cp7 = ModelCheckpoint('model7/', save_best_only=True, monitor='val_loss', verbose=1)
+cp7 = ModelCheckpoint('modelTbilisiMultiNew/', save_best_only=True, monitor='val_loss', verbose=1)
 es = EarlyStopping(monitor='val_loss', verbose=1, patience=300)
 model7.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=lr), metrics=[RootMeanSquaredError()])
 
@@ -77,22 +90,24 @@ model7.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=lr), metric
 # exit()
 
 history = model7.fit(X_train1, y_train1, validation_data=(X_val1, y_val1), epochs=ep, callbacks=[cp7, es], verbose=2)
+with open("modelTbilisiMultiNew/means.json", "w") as write_file: json.dump(means, write_file, indent=4)
 
 plt.plot(history.history['loss'], label='train')
 plt.plot(history.history['val_loss'], label='test')
 plt.legend()
 plt.show()
 
-model7 = load_model('model7/')
+model7 = load_model('modelTbilisiMultiNew/')
+means = json.load(open("modelTbilisiMultiNew/means.json", "r"))
+print(means)
 xP = np.array([X_test1[2], X_test1[3]])
 print(xP)
 print(xP.shape)
-yP = model7.predict(xP) * stdd + meann
+yP = model7.predict(xP) * means['c'][1] + means['c'][0]
 print(yP)
-print(us.plot_predictions(model7, X_test1, y_test1, 'Test Predictions', 'Actuals', 'model7', meann, stdd,
-                          float(model7.optimizer.lr), ep, ws,
-                          start=0,
-                          end=100))
+print(us.plot_predictions(model7, X_test1, y_test1, 'Test Predictions', 'Actuals', 'model7',
+                          means['c'][0], means['c'][1],
+                          float(model7.optimizer.lr), ep, ws))
 exit(0)
 
 # model1 = Sequential()
