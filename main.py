@@ -57,8 +57,8 @@ print(y1.shape)
 
 dataL = len(y1)
 testL = 7
-X_train1, y_train1 = X1[0:dataL - testL], y1[0:dataL - testL]
-X_val1, y_val1 = X1[dataL - testL:], y1[dataL - testL:]
+X_train1, y_train1 = X1[0:dataL - 1], y1[0:dataL - 1]
+X_val1, y_val1 = X1[dataL - testL - testL:dataL - 1], y1[dataL - testL - testL:dataL - 1]
 X_test1, y_test1 = X1[dataL - testL:], y1[dataL - testL:]
 print(X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape)
 neurs = len(X_train1[0][0])
