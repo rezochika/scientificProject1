@@ -1,5 +1,4 @@
 import json
-
 import numpy as np
 import pandas as pd
 from keras import Sequential
@@ -7,18 +6,16 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.engine.input_layer import InputLayer
 from keras.layers import LSTM, Dense
 from keras.losses import MeanSquaredError
-from keras.metrics import RootMeanSquaredError
+from keras.metrics import RootMeanSquaredError, MeanAbsolutePercentageError
 from keras.optimizer_v2.adam import Adam
 from keras.saving.save import load_model
 import absl.logging
 from matplotlib import pyplot as plt
-
+import US
+import US as us
 from ir_finder import LRFinder
 
 absl.logging.set_verbosity(absl.logging.ERROR)
-
-import US
-import US as us
 
 ws = 7
 lr = 0.008886502
@@ -28,23 +25,22 @@ ep = 2000
 df = pd.read_csv(r'Data\TbilisiData.csv')
 df1 = pd.read_csv(r'Data\TbilisiFore.csv')
 df['Troloff2'] = df['Troloff'] ** 2
+df1['Troloff2'] = df1['Troloff'] ** 2
 df.index = pd.to_datetime(df['Date'], format='%m/%d/%Y')
 df1.index = pd.to_datetime(df1['Date'], format='%m/%d/%Y')
 
-TestData = df[500:].loc[:,
-           ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7', 'cy', 'c']]
+TestData = df[500:].loc[:, ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7', 'cy', 'c']]
 
 
-ForecastData = df1.loc[:,
-               ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'mx2', 'mn4']]
+ForecastData = df1.loc[:, ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'mx2', 'mn4']]
 
-meann = np.mean(TestData['c'])
-stdd = np.std(TestData['c'])
-print(meann, stdd)
-TestData['c'] = (TestData['c'] - meann) / stdd
-TestData['cy'] = (TestData['cy'] - meann) / stdd
-TestData['c7'] = (TestData['c7'] - meann) / stdd
-means = {'c': [meann, stdd]}
+mean = np.mean(TestData['c'])
+std = np.std(TestData['c'])
+print(mean, std)
+TestData['c'] = (TestData['c'] - mean) / std
+TestData['cy'] = (TestData['cy'] - mean) / std
+TestData['c7'] = (TestData['c7'] - mean) / std
+means = {'c': [mean, std]}
 for col in TestData.columns:
     if col not in ['c', 'cy', 'c7']:
         TestData[col], m, s = US.normalizeArray(TestData[col])
@@ -73,13 +69,13 @@ model7.add(InputLayer((ws, neurs)))
 model7.add(LSTM(64, return_sequences=True))
 model7.add(LSTM(128))
 model7.add(Dense(16, 'relu'))
-# model7.add(Dense(8, 'relu'))
+model7.add(Dense(8, 'relu'))
 model7.add(Dense(1, 'linear'))
 model7.summary()
 
 cp7 = ModelCheckpoint('modelTbilisiMultiNew/', save_best_only=True, monitor='val_loss', verbose=1)
-es = EarlyStopping(monitor='val_loss', verbose=1, patience=300)
-model7.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=lr), metrics=[RootMeanSquaredError()])
+es = EarlyStopping(monitor='val_loss', verbose=1, patience=500)
+model7.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=lr), metrics=[RootMeanSquaredError(), MeanAbsolutePercentageError()])
 
 # lr_finder = LRFinder(model7)
 # lr_finder.find(X_train1, y_train1, 0.0005, 0.1, 32, ep)
@@ -93,7 +89,7 @@ history = model7.fit(X_train1, y_train1, validation_data=(X_val1, y_val1), epoch
 with open("modelTbilisiMultiNew/means.json", "w") as write_file: json.dump(means, write_file, indent=4)
 
 plt.plot(history.history['loss'], label='train')
-plt.plot(history.history['val_loss'], label='test')
+plt.plot(history.history['val_loss'], label='validation')
 plt.legend()
 plt.show()
 
