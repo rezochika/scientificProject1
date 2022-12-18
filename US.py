@@ -62,6 +62,7 @@ def plot_predictions(model, X, y, label1, label2, title, mean, std,lr, ep, ws, s
     plt.plot(df['Actuals'][start:end], label=label2)
     plt.legend()
     plt.title(f'{title}, mape={mape:.2%}, lr: {lr:.5f}, ep: {ep}, ws: {ws}')
+    print(df, err, mape)
     plt.show()
     return df, err, mape
 
