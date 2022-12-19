@@ -27,7 +27,9 @@ ep = 2000
 df = pd.read_csv(r'Data\TbilisiData.csv')
 df1 = pd.read_csv(r'Data\TbilisiFore.csv')
 df['Troloff2'] = df['Troloff'] ** 2
+df['Troloff3'] = df['Troloff'] ** 3
 df1['Troloff2'] = df1['Troloff'] ** 2
+# df1['Troloff3'] = df1['Troloff'] ** 3
 df.index = pd.to_datetime(df['Date'], format='%m/%d/%Y')
 df1.index = pd.to_datetime(df1['Date'], format='%m/%d/%Y')
 
@@ -104,9 +106,9 @@ print(xP)
 print(xP.shape)
 yP = model7.predict(xP) * means['c'][1] + means['c'][0]
 print(yP)
-us.plot_predictions(model7, X_test1, y_test1, 'Test Predictions', 'Actuals', 'model7',
+us.plot_predictions(model7, X_train1, y_train1, 'Test Predictions', 'Actuals', 'model7',
                     means['c'][0], means['c'][1],
-                    float(model7.optimizer.lr), ep, ws)
+                    float(model7.optimizer.lr), ep, ws, end=3000)
 exit(0)
 
 # model1 = Sequential()
