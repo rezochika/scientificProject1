@@ -5,3 +5,5 @@ keras
 matplotlib
 scikit-learn
 tensorflow-gpu
+pmdarima
+statsmodels
