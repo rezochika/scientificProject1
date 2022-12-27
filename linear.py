@@ -1,24 +1,50 @@
-import numpy as np
+import math
+import pandas as pd
+from matplotlib import pyplot as plt
 from sklearn.linear_model import LinearRegression
-
 import sqlconnect
 
-df, df1 = sqlconnect.getdatafromsql()
-df['Troloff2'] = df['Troloff'] ** 2
-df1['Troloff2'] = df1['Troloff'] ** 2
+ws = 7
 
-# Get all the columns from the dataframe.
-columns = df.columns.tolist()
+df, df1 = sqlconnect.getdatafromsqlols()
+# df['Troloff2'] = df['Troloff'] ** 2
+# df1['Troloff2'] = df1['Troloff'] ** 2
+drivers = df.columns.tolist()
+print(drivers)
+drivers.remove('hdd')
+drivers.remove('Date')
 
-# Store the variable well be predicting on.
-target = "c"
+TestData = df.loc[:, drivers]
+print(TestData)
+ForecastData = pd.concat([TestData[len(TestData) - ws:], df1.loc[:, drivers]])
 
-# Initialize the model class.
+columns = TestData.columns.tolist()
+
 lin_model = LinearRegression()
-X = df[[c for c in columns if c not in [target, 'DT']]]
-y = df[target]
-# Fit the model to the training data.
+X = TestData[[c for c in columns if c not in ['c']]]
+y = TestData['c']
+
 lin_model.fit(X, y)
 print(lin_model.score(X, y))
 print(lin_model.coef_)
 print(lin_model.intercept_)
+
+for r in range(ws, len(ForecastData)):
+    if math.isnan(float(ForecastData['c7'][r])): ForecastData['c7'][r] = ForecastData['c'][r - 7]
+    if math.isnan(float(ForecastData['cy'][r])): ForecastData['cy'][r] = ForecastData['c'][r - 1]
+    dcy = ForecastData['cy'][r] / ForecastData['cy'][r - 1]
+    ForecastData['dcy'][r] = 0 if dcy < 1.3 else dcy
+    # if math.isnan(float(ForecastData['c'][r])):
+    X1 = ForecastData[[c for c in columns if c not in ['c']]][:r]
+    yP = lin_model.predict(X1)
+    ForecastData['c'][r] = yP[len(yP) - 1]
+
+# print(ForecastData)
+results = ForecastData['c']  # * means['c'][1] + means['c'][0]
+print(results)
+plt.plot(results[:ws + 1], color='#1f76b4')
+plt.plot(results[ws:], color='darkgreen')
+plt.grid(visible=True, which='both')
+plt.show()
+
+exit(0)

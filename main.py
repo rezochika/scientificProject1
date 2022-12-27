@@ -130,6 +130,7 @@ means = json.load(open(modelPath + "means.json", "r"))
 
 for col in ForecastData.columns:
     ForecastData[col] = (ForecastData[col] - means[col][0]) / means[col][1]
+
 for r in range(ws, 2*ws):
     ForecastData['c7'][r] = math.nan
     ForecastData['cy'][r] = math.nan
@@ -141,9 +142,11 @@ for r in range(ws, len(ForecastData)):
     if math.isnan(float(ForecastData['cy'][r])): ForecastData['cy'][r] = ForecastData['c'][r - 1]
     # dcy = ForecastData['cy'][r] / ForecastData['cy'][r - 1]
     ForecastData['dcy'][r] = - means['dcy'][0] / means['dcy'][1]
-    X1, y1 = US.dftoXy1(ForecastData[:r + 1], ws)
-    yP = modelDNN.predict(X1)
-    if math.isnan(float(ForecastData['c'][r])): ForecastData['c'][r] = yP[len(yP) - 1]
+    if math.isnan(float(ForecastData['c'][r])):
+        X1, y1 = US.dftoXy1(ForecastData[:r + 1], ws)
+        yP = modelDNN.predict(X1)
+        ForecastData['c'][r] = yP[len(yP) - 1]
+
 # print(ForecastData)
 results = ForecastData['c'] * means['c'][1] + means['c'][0]
 print(results)
