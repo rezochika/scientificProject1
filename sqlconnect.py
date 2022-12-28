@@ -11,14 +11,14 @@ def getdatafromsql():
     engine = create_engine(connection_url)
 
     sql_query = pd.read_sql(
-        "SELECT DT,wf,mf,sf,IHT,IH,wfy,sqhdd1,dhdd1,dhdd13,hdd1t,Troloff,mx2,mn4,dcy,c7,cy,c FROM [FORECAST_DB].[dbo].[vwTEST_DNN] where c+cy+c7 is not null order by DT",
+        "SELECT DT, DATEPART(dayofyear, DT)*1.0  as DOY,wf,mf,sf,IHT,IH,wfy,sqhdd1,dhdd1,dhdd13,hdd1t,Troloff,mx2,mn4,dcy,c7,cy,c FROM [FORECAST_DB].[dbo].[vwTEST_DNN] where c+cy+c7 is not null order by DT",
         engine)
 
     df = pd.DataFrame(sql_query)
     df.index = pd.to_datetime(df['DT'])
 
     sql_query = pd.read_sql(
-        "SELECT DT,wf,mf,sf,IHT,IH,wfy,sqhdd1,dhdd1,dhdd13,hdd1t,Troloff,mx2,mn4,dcy,c7,cy,c FROM [FORECAST_DB].[dbo].[vwTEST_DNN] where c is null and dt>'2022-12-01' order by DT",
+        "SELECT DT, DATEPART(dayofyear, DT)*1.0  as DOY,wf,mf,sf,IHT,IH,wfy,sqhdd1,dhdd1,dhdd13,hdd1t,Troloff,mx2,mn4,dcy,c7,cy,c FROM [FORECAST_DB].[dbo].[vwTEST_DNN] where c is null and dt>'2022-12-01' order by DT",
         engine)
 
     df1 = pd.DataFrame(sql_query)

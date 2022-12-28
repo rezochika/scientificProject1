@@ -50,11 +50,11 @@ drivers = ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'Troloff
            'c']
 TestData = df.loc[:, drivers]
 
-ForecastData = pd.concat([TestData[len(TestData) - 2 * ws:], df1.loc[:,
+ForecastData = pd.concat([TestData[len(TestData) - 3 * ws:], df1.loc[:,
                                                              ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t',
                                                               'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7', 'cy', 'c']]])
 
-
+print(TestData)
 mean = np.mean(TestData['c'])
 std = np.std(TestData['c'])
 TestData['c'] = (TestData['c'] - mean) / std
@@ -83,8 +83,8 @@ neurs = len(X_train1[0][0])
 if rebuild:
     modelDNN = Sequential()
     modelDNN.add(InputLayer((ws, neurs)))
-    modelDNN.add((LSTM(64, return_sequences=True)))
-    modelDNN.add((LSTM(128)))
+    modelDNN.add(Bidirectional(LSTM(32, return_sequences=True)))
+    modelDNN.add(Bidirectional(LSTM(64)))
     modelDNN.add(Dense(16, 'relu'))
     modelDNN.add(Dense(8, 'linear'))
     modelDNN.add(Dense(1, 'linear'))
@@ -131,13 +131,13 @@ means = json.load(open(modelPath + "means.json", "r"))
 for col in ForecastData.columns:
     ForecastData[col] = (ForecastData[col] - means[col][0]) / means[col][1]
 
-for r in range(ws, 2*ws):
-    ForecastData['c7'][r] = math.nan
-    ForecastData['cy'][r] = math.nan
+for r in range(2*ws-1, 3*ws):
+    # ForecastData['c7'][r] = math.nan
+    # ForecastData['cy'][r] = math.nan
     ForecastData['c'][r] = math.nan
 
 
-for r in range(ws, len(ForecastData)):
+for r in range(2*ws-2, len(ForecastData)):
     if math.isnan(float(ForecastData['c7'][r])): ForecastData['c7'][r] = ForecastData['c'][r - 7]
     if math.isnan(float(ForecastData['cy'][r])): ForecastData['cy'][r] = ForecastData['c'][r - 1]
     # dcy = ForecastData['cy'][r] / ForecastData['cy'][r - 1]
