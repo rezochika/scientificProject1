@@ -26,6 +26,7 @@ ws = 7
 lr = 0.008886502 # # 0.011353
 ep = 5000
 plot = False
+Bi = False
 for arg in sys.argv:
     if arg == 'rebuild=1':
         rebuild = True
@@ -35,6 +36,8 @@ for arg in sys.argv:
         ep = int(arg.replace("epochs=", ""))
     elif arg == 'plot=1':
         plot = True
+    elif arg == 'bi=1':
+        Bi = True
 
 # rebuild = True
 
@@ -86,8 +89,12 @@ neurs = len(X_train1[0][0])
 if rebuild:
     modelDNN = Sequential()
     modelDNN.add(InputLayer((ws, neurs)))
-    modelDNN.add((LSTM(64, return_sequences=True)))
-    modelDNN.add((LSTM(128)))
+    if Bi:
+        modelDNN.add(Bidirectional(LSTM(64, return_sequences=True)))
+        modelDNN.add(Bidirectional(LSTM(128)))
+    else:
+        modelDNN.add((LSTM(64, return_sequences=True)))
+        modelDNN.add((LSTM(128)))
     modelDNN.add(Dense(16, 'relu'))
     modelDNN.add(Dense(8, 'linear'))
     modelDNN.add(Dense(1, 'linear'))
