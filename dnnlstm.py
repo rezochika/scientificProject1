@@ -27,6 +27,7 @@ lr = 0.008886502 # # 0.011353
 ep = 5000
 plot = False
 Bi = False
+dnnlayers = 64
 for arg in sys.argv:
     if arg == 'rebuild=1':
         rebuild = True
@@ -34,6 +35,8 @@ for arg in sys.argv:
         modelPath = arg.replace("modelPath=", "")
     elif arg.startswith("epochs"):
         ep = int(arg.replace("epochs=", ""))
+    elif arg.startswith("layers"):
+        dnnlayers = int(arg.replace("layers=", ""))
     elif arg == 'plot=1':
         plot = True
     elif arg == 'bi=1':
@@ -90,11 +93,11 @@ if rebuild:
     modelDNN = Sequential()
     modelDNN.add(InputLayer((ws, neurs)))
     if Bi:
-        modelDNN.add(Bidirectional(LSTM(64, return_sequences=True)))
-        modelDNN.add(Bidirectional(LSTM(128)))
+        modelDNN.add(Bidirectional(LSTM(dnnlayers, return_sequences=True)))
+        modelDNN.add(Bidirectional(LSTM(dnnlayers*2)))
     else:
-        modelDNN.add((LSTM(64, return_sequences=True)))
-        modelDNN.add((LSTM(128)))
+        modelDNN.add((LSTM(dnnlayers, return_sequences=True)))
+        modelDNN.add((LSTM(dnnlayers*2)))
     modelDNN.add(Dense(16, 'relu'))
     modelDNN.add(Dense(8, 'linear'))
     modelDNN.add(Dense(1, 'linear'))
@@ -170,4 +173,3 @@ if plot:
     plt.grid(visible=True, which='both')
     plt.show()
 
-exit(0)
