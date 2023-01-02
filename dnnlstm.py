@@ -3,7 +3,6 @@ import math
 import sys
 
 import absl.logging
-import keras.losses
 import numpy as np
 import pandas as pd
 from keras import Sequential
@@ -23,7 +22,7 @@ absl.logging.set_verbosity(absl.logging.ERROR)
 modelPath = 'modelTbilisi1/'
 rebuild = False
 ws = 7
-lr = 0.008886502 # # 0.011353
+lr = 0.008886502  # # 0.011353
 ep = 5000
 plot = False
 Bi = False
@@ -61,7 +60,8 @@ TestData = df.loc[:, drivers]
 
 ForecastData = pd.concat([TestData[len(TestData) - 3 * ws:], df1.loc[:,
                                                              ['wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t',
-                                                              'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7', 'cy', 'c']]])
+                                                              'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7', 'cy',
+                                                              'c']]])
 
 # print(TestData)
 mean = np.mean(TestData['c'])
@@ -94,10 +94,10 @@ if rebuild:
     modelDNN.add(InputLayer((ws, neurs)))
     if Bi:
         modelDNN.add(Bidirectional(LSTM(dnnlayers, return_sequences=True)))
-        modelDNN.add(Bidirectional(LSTM(dnnlayers*2)))
+        modelDNN.add(Bidirectional(LSTM(dnnlayers * 2)))
     else:
         modelDNN.add((LSTM(dnnlayers, return_sequences=True)))
-        modelDNN.add((LSTM(dnnlayers*2)))
+        modelDNN.add((LSTM(dnnlayers * 2)))
     modelDNN.add(Dense(16, 'relu'))
     modelDNN.add(Dense(8, 'linear'))
     modelDNN.add(Dense(1, 'linear'))
@@ -125,7 +125,7 @@ if rebuild:
     loss_hist = history.history['val_loss']
     bestEpoch = np.argmin(loss_hist)
     print(f'best epoch: {bestEpoch + 1}')
-    his = {'epoch': (bestEpoch*1.0 + 1)}
+    his = {'epoch': (bestEpoch * 1.0 + 1)}
     for key in history.history.keys():
         print(f'{key:<40}={history.history[key][bestEpoch]:.4f}')
         his[key] = history.history[key][bestEpoch]
@@ -154,7 +154,7 @@ for col in ForecastData.columns:
 #     ForecastData['c'][r] = math.nan
 
 
-for r in range(2*ws-2, len(ForecastData)):
+for r in range(2 * ws - 2, len(ForecastData)):
     if math.isnan(float(ForecastData['c7'][r])): ForecastData['c7'][r] = ForecastData['c'][r - 7]
     if math.isnan(float(ForecastData['cy'][r])): ForecastData['cy'][r] = ForecastData['c'][r - 1]
     # dcy = ForecastData['cy'][r] / ForecastData['cy'][r - 1]
@@ -172,4 +172,3 @@ if plot:
     plt.plot(results[3 * ws:], color='darkgreen')
     plt.grid(visible=True, which='both')
     plt.show()
-
