@@ -1,0 +1,9 @@
+{
+    "epoch": 745.0,
+    "loss": NaN,
+    "root_mean_squared_error": NaN,
+    "mean_absolute_percentage_error": NaN,
+    "val_loss": NaN,
+    "val_root_mean_squared_error": NaN,
+    "val_mean_absolute_percentage_error": NaN
+}

@@ -67,7 +67,7 @@ class LRFinder:
 
         # Restore the weights to the state before model fitting
         self.model.set_weights(initial_weights)
-        print(logs['loss'])
+        print(self.best_lr)
 
         # Restore the original learning rate
         # K.set_value(self.model.optimizer.lr, original_lr)

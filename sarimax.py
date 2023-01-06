@@ -1,93 +1,91 @@
-from datetime import datetime
-import numpy as np
-import pandas as pd
+import math
+import pickle
+
 import matplotlib.pylab as plt
-from matplotlib.pylab import rcParams
+import pandas as pd
+from pmdarima import auto_arima
+from statsmodels.tsa.seasonal import seasonal_decompose
 
-from statsmodels.tsa.stattools import adfuller
+import sqlconnect
 
-import pmdarima as pm
+ws = 3
+df, df1 = sqlconnect.getdatafromsql()
+df['DT'] = pd.to_datetime(df['DT'], infer_datetime_format=True)
+df = df.set_index(['DT'])
+df['Troloff2'] = df['Troloff'] ** 2
+df1['Troloff2'] = df1['Troloff'] ** 2
+drivers = ['c', 'wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7',
+           'cy']
+TestData = df.loc[:, drivers]
+ForecastData = pd.concat([TestData[len(TestData) - 2 * ws:], df1.loc[:,
+                                                             ['c', 'wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t',
+                                                              'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7', 'cy']]])
 
-# df = pd.read_csv(
-#     "https://raw.githubusercontent.com/AileenNielsen/TimeSeriesAnalysisWithPython/master/data/AirPassengers.csv")
-df = pd.read_csv(r'Data\TbilisiData.csv')
-df['Date'] = pd.to_datetime(df['Date'], infer_datetime_format=True)
-df = df.set_index(['Date'])
-# df.index = pd.to_datetime(df['Date'], format='%m/%d/%Y')
-# # string to date format
-# df['Month'] = pd.to_datetime(df['Month'], infer_datetime_format=True)
-# df = df.set_index(['Month'])
-print(df.head(5))
-
-# Determine rolling statistics
-df["rolling_avg"] = df["c"].rolling(
-    window=12).mean()  # window size 12 denotes 12 months, giving rolling mean at yearly level
-df["rolling_std"] = df["c"].rolling(window=7).std()
-
-# Plot rolling statistics
-plt.figure(figsize=(15, 7))
-plt.plot(df["c"], color='#379BDB', label='Original')
-plt.plot(df["rolling_avg"], color='#D22A0D', label='Rolling Mean')
-plt.plot(df["rolling_std"], color='#142039', label='Rolling Std')
-plt.legend(loc='best')
-plt.title('Rolling Mean & Standard Deviation')
-plt.show(block=False)
-
-# Augmented Dickey–Fuller test:
-print('Results of Dickey Fuller Test:')
-dftest = adfuller(df['c'], autolag='AIC')
-
-dfoutput = pd.Series(dftest[0:4], index=['Test Statistic', 'p-value', '#Lags Used', 'Number of Observations Used'])
-for key, value in dftest[4].items():
-    dfoutput['Critical Value (%s)' % key] = value
-
-print(dfoutput)
-
-# adding exogenous variable
-df['date_index'] = df.index.month
-
-# SARIMAX Model
-SARIMAX_model = pm.auto_arima(df[['c']], exogenous=df[['date_index']],
-                              start_p=1, start_q=1,
-                              test='adf',
-                              max_p=3, max_q=3, m=12,
-                              start_P=0, seasonal=True,
-                              d=None, D=1,
-                              trace=False,
-                              error_action='ignore',
-                              suppress_warnings=True,
-                              stepwise=True)
+decomposed = seasonal_decompose(TestData['c'], model='additive', extrapolate_trend='freq', period=365)
+decomposed.plot()
+plt.show()
+print(TestData)
+training_y = TestData.iloc[:-3, 0]
+test_y = TestData.iloc[-3:, 0]
+training_X = TestData.iloc[:-3, 1:]
+test_X = TestData.iloc[-3:, 1:]
+model = auto_arima(y=training_y,
+                   X=training_X,
+                   m=7)
+with open('sarimax.model', 'wb') as f:
+    pickle.dump(model, f)
+predictions = pd.Series(model.predict(n_periods=3,
+                                      X=test_X))
+predictions.index = test_y.index
+# test_y['preds'] = predictions
+print(predictions)
+print(test_y)
+# Visualize
+training_y['2022-12-15':].plot(figsize=(16, 6), legend=True)
+test_y.plot(legend=True)
+predictions.plot()
+plt.show()
+for r in range(2*ws, len(ForecastData)):
+    if math.isnan(float(ForecastData['c7'][r])): ForecastData['c7'][r] = ForecastData['c'][r - 7]
+    if math.isnan(float(ForecastData['cy'][r])): ForecastData['cy'][r] = ForecastData['c'][r - 1]
+    # dcy = ForecastData['cy'][r] / ForecastData['cy'][r - 1]
+    ForecastData['dcy'][r] = 0
+    if math.isnan(float(ForecastData['c'][r])):
+        test_X = TestData.iloc[0:, 1:]
+        yP = model.predict(test_X)
+        ForecastData['c'][r] = yP[len(yP) - 1]
+print(ForecastData)
+exit()
 
 
-def sarimax_forecast(SARIMAX_model, periods=24):
-    # Forecast
-    n_periods = periods
-
-    forecast_df = pd.DataFrame({"date_index": pd.date_range(df.index[-1], periods=n_periods, freq='MS').month},
-                               index=pd.date_range(df.index[-1] + pd.DateOffset(months=1), periods=n_periods,
-                                                   freq='MS'))
-
-    fitted, confint = SARIMAX_model.predict(n_periods=n_periods,
-                                            return_conf_int=True,
-                                            exogenous=forecast_df[['date_index']])
-    index_of_fc = pd.date_range(df.index[-1] + pd.DateOffset(months=1), periods=n_periods, freq='MS')
-
-    # make series for plotting purpose
-    fitted_series = pd.Series(fitted, index=index_of_fc)
-    lower_series = pd.Series(confint[:, 0], index=index_of_fc)
-    upper_series = pd.Series(confint[:, 1], index=index_of_fc)
-
-    # Plot
-    plt.figure(figsize=(15, 7))
-    plt.plot(df["c"], color='#1f76b4')
-    plt.plot(fitted_series, color='darkgreen')
-    plt.fill_between(lower_series.index,
-                     lower_series,
-                     upper_series,
-                     color='k', alpha=.15)
-
-    plt.title("SARIMAX - Forecast of Airline Passengers")
+def testStat(timeseries):
+    timeseries.dropna(inplace=True)
+    rolmean = timeseries.rolling(window=356).mean()
+    rolstd = timeseries.rolling(window=365).std()
+    orig = plt.plot(timeseries, label='Original')
+    mean = plt.plot(rolmean, label='Rolling mean')
+    std = plt.plot(rolstd, label='Rolling std')
+    plt.legend(loc='best')
+    plt.title('Timeseries data with rolling mean and std. dev.')
     plt.show()
+    from statsmodels.tsa.stattools import adfuller
+    dftest = adfuller(timeseries)
+    dfoutput = pd.Series(dftest[0:4],
+                         index=['The test statistic', 'Mackinnon\'s approximate p - value', '# usedLags', 'NOBS'])
+    print(dfoutput)
 
 
-sarimax_forecast(SARIMAX_model, periods=24)
+testStat(TestData['c'])
+
+from statsmodels.tsa.stattools import acf
+from statsmodels.tsa.stattools import pacf
+from statsmodels.graphics.tsaplots import plot_acf
+from statsmodels.graphics.tsaplots import plot_pacf
+
+lag_acf = acf(TestData['c'], nlags=140)
+lag_pacf = pacf(TestData['c'], nlags=70)
+fig, ax = plt.subplots(1, 2, figsize=(20, 5))
+plot_acf(lag_acf, ax=ax[0])
+plot_pacf(lag_pacf, lags=20, ax=ax[1])
+plt.show()
+exit()

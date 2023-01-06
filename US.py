@@ -65,8 +65,8 @@ def plot_predictions(model, X, y, label1, label2, title, mean, std, lr, ep, ws, 
     predictions = model.predict(X).flatten()
     predictions = predictions * std + mean
     y = y * std + mean
-    err = float(mse(y, predictions))
-    mape = MAPE(y, predictions)
+    err = float(mse(y[start:end], predictions[start:end]))
+    mape = MAPE(y[start:end], predictions[start:end])
     df = pd.DataFrame(data={'Predictions': predictions, 'Actuals': y})
     plt.plot(df['Predictions'][start:end], label=label1)
     plt.plot(df['Actuals'][start:end], label=label2)

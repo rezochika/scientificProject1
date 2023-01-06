@@ -3,6 +3,7 @@ import math
 import sys
 
 import absl.logging
+import joblib
 import numpy as np
 import pandas as pd
 from keras import Sequential
@@ -19,7 +20,7 @@ import US
 import sqlconnect
 
 absl.logging.set_verbosity(absl.logging.ERROR)
-modelPath = 'modelTbilisi1/'
+modelPath = 'modelLSTM6420230105/'
 rebuild = False
 ws = 7
 lr = 0.008886502  # # 0.011353
@@ -118,7 +119,7 @@ if rebuild:
 
     history = modelDNN.fit(X_train1, y_train1, validation_data=(X_val1, y_val1), epochs=ep, callbacks=[es],
                            verbose=2)
-    modelDNN.save(modelPath)
+    modelDNN.save(modelPath+'model.h5')
     with open(modelPath + "means.json", "w") as write_file:
         json.dump(means, write_file, indent=4)
 
@@ -138,7 +139,7 @@ if rebuild:
     # plt.legend()
     # plt.show()
 
-modelDNN = load_model(modelPath)
+modelDNN = load_model(modelPath+'model.h5')
 means = json.load(open(modelPath + "means.json", "r"))
 
 # US.plot_predictions(modelDNN, X_test1, y_test1, 'Test Predictions', 'Actuals', 'model7',
