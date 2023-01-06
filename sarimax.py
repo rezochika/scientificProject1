@@ -1,3 +1,4 @@
+from datetime import datetime
 import math
 import pickle
 
@@ -7,7 +8,7 @@ from pmdarima import auto_arima
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 import sqlconnect
-
+print(datetime.now())
 ws = 3
 df, df1 = sqlconnect.getdatafromsql()
 df['DT'] = pd.to_datetime(df['DT'], infer_datetime_format=True)
@@ -17,44 +18,51 @@ df1['Troloff2'] = df1['Troloff'] ** 2
 drivers = ['c', 'wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t', 'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7',
            'cy']
 TestData = df.loc[:, drivers]
-ForecastData = pd.concat([TestData[len(TestData) - 2 * ws:], df1.loc[:,
+ForecastData = pd.concat([TestData[len(TestData) - ws:], df1.loc[:,
                                                              ['c', 'wf', 'mf', 'sf', 'IHT', 'wfy', 'dhdd1', 'hdd1t',
                                                               'Troloff', 'Troloff2', 'mx2', 'mn4', 'dcy', 'c7', 'cy']]])
 
-decomposed = seasonal_decompose(TestData['c'], model='additive', extrapolate_trend='freq', period=365)
-decomposed.plot()
-plt.show()
-print(TestData)
-training_y = TestData.iloc[:-3, 0]
+# decomposed = seasonal_decompose(TestData['c'], model='additive', extrapolate_trend='freq', period=365)
+# decomposed.plot()
+# plt.show()
+
+training_y = TestData.iloc[:, 0]
 test_y = TestData.iloc[-3:, 0]
-training_X = TestData.iloc[:-3, 1:]
+training_X = TestData.iloc[:, 1:]
 test_X = TestData.iloc[-3:, 1:]
-model = auto_arima(y=training_y,
-                   X=training_X,
-                   m=7)
-with open('sarimax.model', 'wb') as f:
-    pickle.dump(model, f)
-predictions = pd.Series(model.predict(n_periods=3,
-                                      X=test_X))
+# model = auto_arima(y=training_y,
+#                    X=training_X,
+#                    m=7)
+# with open(r'modelSARIMAX/sarimax.pickle', 'wb') as f:
+#     pickle.dump(model, f)
+with open(r'modelSARIMAX/sarimax.pickle', 'rb') as handle:
+    model = pickle.load(handle)
+print(datetime.now())
+predictions = pd.Series(model.predict(n_periods=3, X=test_X))
 predictions.index = test_y.index
 # test_y['preds'] = predictions
-print(predictions)
-print(test_y)
+# print(predictions)
+# print(test_y)
 # Visualize
 training_y['2022-12-15':].plot(figsize=(16, 6), legend=True)
 test_y.plot(legend=True)
 predictions.plot()
 plt.show()
-for r in range(2*ws, len(ForecastData)):
+for r in range(ws, len(ForecastData)):
     if math.isnan(float(ForecastData['c7'][r])): ForecastData['c7'][r] = ForecastData['c'][r - 7]
     if math.isnan(float(ForecastData['cy'][r])): ForecastData['cy'][r] = ForecastData['c'][r - 1]
     # dcy = ForecastData['cy'][r] / ForecastData['cy'][r - 1]
     ForecastData['dcy'][r] = 0
     if math.isnan(float(ForecastData['c'][r])):
-        test_X = TestData.iloc[0:, 1:]
-        yP = model.predict(test_X)
+        test_X = ForecastData.iloc[:, 1:][:r]
+        yP = model.predict(n_periods=len(test_X), X=test_X)
         ForecastData['c'][r] = yP[len(yP) - 1]
 print(ForecastData)
+results = ForecastData['c']
+plt.plot(results[:ws + 1], color='#1f76b4')
+plt.plot(results[ws:], color='darkgreen')
+plt.grid(visible=True, which='both')
+plt.show()
 exit()
 
 
