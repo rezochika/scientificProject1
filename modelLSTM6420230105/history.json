@@ -1,9 +1,9 @@
 {
-    "epoch": 50.0,
-    "loss": 0.002405950566753745,
-    "root_mean_squared_error": 0.04905049130320549,
-    "mean_absolute_percentage_error": 34.154727935791016,
-    "val_loss": 0.0017555839149281383,
-    "val_root_mean_squared_error": 0.04189968854188919,
-    "val_mean_absolute_percentage_error": 1.6164885759353638
+    "epoch": 116.0,
+    "loss": 0.0009564657229930162,
+    "root_mean_squared_error": 0.03092677891254425,
+    "mean_absolute_percentage_error": 13.72868537902832,
+    "val_loss": 0.0013194645289331675,
+    "val_root_mean_squared_error": 0.036324433982372284,
+    "val_mean_absolute_percentage_error": 1.5180631875991821
 }

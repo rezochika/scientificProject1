@@ -3,7 +3,6 @@ import math
 import sys
 
 import absl.logging
-import joblib
 import numpy as np
 import pandas as pd
 from keras import Sequential
@@ -20,6 +19,9 @@ import US
 import sqlconnect
 
 absl.logging.set_verbosity(absl.logging.ERROR)
+if not sys.warnoptions:
+    import warnings
+    warnings.simplefilter("ignore")
 modelPath = 'modelLSTM6420230105/'
 rebuild = False
 ws = 7

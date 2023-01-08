@@ -1,13 +1,38 @@
+import sys
 from datetime import datetime
 import math
 import pickle
 
+import absl.logging
 import matplotlib.pylab as plt
 import pandas as pd
 from pmdarima import auto_arima
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 import sqlconnect
+absl.logging.set_verbosity(absl.logging.ERROR)
+if not sys.warnoptions:
+    import warnings
+    warnings.simplefilter("ignore")
+modelPath = 'modelLSTM6420230105/'
+rebuild = False
+ep = 5000
+plot = False
+Bi = False
+dnnlayers = 64
+for arg in sys.argv:
+    if arg == 'rebuild=1':
+        rebuild = True
+    elif arg.startswith("modelPath"):
+        modelPath = arg.replace("modelPath=", "")
+    elif arg.startswith("epochs"):
+        ep = int(arg.replace("epochs=", ""))
+    elif arg.startswith("layers"):
+        dnnlayers = int(arg.replace("layers=", ""))
+    elif arg == 'plot=1':
+        plot = True
+    elif arg == 'bi=1':
+        Bi = True
 print(datetime.now())
 ws = 3
 df, df1 = sqlconnect.getdatafromsql()
@@ -30,11 +55,13 @@ training_y = TestData.iloc[:, 0]
 test_y = TestData.iloc[-3:, 0]
 training_X = TestData.iloc[:, 1:]
 test_X = TestData.iloc[-3:, 1:]
-# model = auto_arima(y=training_y,
-#                    X=training_X,
-#                    m=7)
-# with open(r'modelSARIMAX/sarimax.pickle', 'wb') as f:
-#     pickle.dump(model, f)
+if rebuild:
+    model = auto_arima(y=training_y,
+                       X=training_X,
+                       m=7)
+    with open(r'modelSARIMAX/sarimax.pickle', 'wb') as f:
+        pickle.dump(model, f)
+
 with open(r'modelSARIMAX/sarimax.pickle', 'rb') as handle:
     model = pickle.load(handle)
 print(datetime.now())
@@ -44,20 +71,20 @@ predictions.index = test_y.index
 # print(predictions)
 # print(test_y)
 # Visualize
-training_y['2022-12-15':].plot(figsize=(16, 6), legend=True)
-test_y.plot(legend=True)
-predictions.plot()
-plt.show()
+# training_y['2023-01-01':].plot(figsize=(16, 6), legend=True)
+# test_y.plot(legend=True)
+# predictions.plot()
+# plt.show()
 for r in range(ws, len(ForecastData)):
     if math.isnan(float(ForecastData['c7'][r])): ForecastData['c7'][r] = ForecastData['c'][r - 7]
     if math.isnan(float(ForecastData['cy'][r])): ForecastData['cy'][r] = ForecastData['c'][r - 1]
     # dcy = ForecastData['cy'][r] / ForecastData['cy'][r - 1]
     ForecastData['dcy'][r] = 0
     if math.isnan(float(ForecastData['c'][r])):
-        test_X = ForecastData.iloc[:, 1:][:r]
+        test_X = ForecastData.iloc[r-1:r, 1:]
         yP = model.predict(n_periods=len(test_X), X=test_X)
         ForecastData['c'][r] = yP[len(yP) - 1]
-print(ForecastData)
+print(ForecastData['c'])
 results = ForecastData['c']
 plt.plot(results[:ws + 1], color='#1f76b4')
 plt.plot(results[ws:], color='darkgreen')
