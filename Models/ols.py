@@ -1,11 +1,12 @@
+import os
 import pickle
-from statistics import LinearRegression
+from sklearn.linear_model import LinearRegression
 
-import pandas as pd
-from pmdarima import auto_arima
+import sqlconnect
 
 
-def build_ols(model_path, df):
+def build_ols(model_path):
+    df, df1 = sqlconnect.getdatafromsqlols()
     path = '{0}OLS'.format(model_path)
     df['Troloff2'] = df['Troloff'] ** 2
     drivers = df.columns.tolist()
@@ -21,5 +22,6 @@ def build_ols(model_path, df):
     y = test_data['c']
 
     model.fit(x, y)
+    os.makedirs(os.path.dirname(path+r'/ols.pickle'), exist_ok=True)
     with open(path+r'/ols.pickle', 'wb') as f:
         pickle.dump(model, f)

@@ -61,7 +61,7 @@ if rebuild:
     model = auto_arima(y=training_y,
                        X=training_X,
                        m=7)
-    with open(r'modelSARIMAX/sarimax.pickle', 'wb') as f:
+    with open(r'modelSARIMAX/sarimax.pickle', 'w+') as f:
         pickle.dump(model, f)
 
 with open(r'modelSARIMAX/sarimax.pickle', 'rb') as handle:

@@ -13,14 +13,19 @@ if not sys.warnoptions:
 ws = 7
 lr = 0.008886502  # # 0.011353
 ep = 5000
-
+print(datetime.now())
+start = datetime.now()
 modelPath = 'CompiledModels/' + datetime.now().strftime("%Y%m%d/")
 df, df1 = sqlconnect.getdatafromsql()
-build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=32, model_path=modelPath, df=df.copy())
-build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=32, model_path=modelPath, df=df.copy())
-build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=64, model_path=modelPath, df=df.copy())
-build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=64, model_path=modelPath, df=df.copy())
-build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=128, model_path=modelPath, df=df.copy())
-build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=128, model_path=modelPath, df=df.copy())
+build_ols(model_path=modelPath)
 build_sarimax(model_path=modelPath, df=df.copy())
-build_ols(model_path=modelPath, df=df.copy())
+build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=16, model_path=modelPath, df=df.copy(), verbose=2)
+build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=16, model_path=modelPath, df=df.copy(), verbose=2)
+build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=32, model_path=modelPath, df=df.copy(), verbose=2)
+build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=32, model_path=modelPath, df=df.copy(), verbose=2)
+build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=64, model_path=modelPath, df=df.copy(), verbose=2)
+build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=64, model_path=modelPath, df=df.copy(), verbose=2)
+build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=128, model_path=modelPath, df=df.copy(), verbose=2)
+build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=128, model_path=modelPath, df=df.copy(), verbose=2)
+print(datetime.now())
+print(datetime.now()-start)

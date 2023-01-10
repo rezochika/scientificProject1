@@ -1,3 +1,4 @@
+import os
 import pickle
 
 import pandas as pd
@@ -16,5 +17,6 @@ def build_sarimax(model_path, df):
     model = auto_arima(y=training_y,
                        X=training_x,
                        m=7)
+    os.makedirs(os.path.dirname(path+r'/sarimax.pickle'), exist_ok=True)
     with open(path+r'/sarimax.pickle', 'wb') as f:
         pickle.dump(model, f)

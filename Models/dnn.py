@@ -12,7 +12,7 @@ from keras.optimizer_v2.adam import Adam
 import US
 
 
-def build_dnn(ws, lr, ep, bi, dnnlayers, model_path, df):
+def build_dnn(ws, lr, ep, bi, dnnlayers, model_path, df, verbose):
     path = '{0}LSTM_layers_{1}'.format(model_path, dnnlayers)
     if bi: path = path+'_Bidirectional'
     path += '/'
@@ -53,12 +53,12 @@ def build_dnn(ws, lr, ep, bi, dnnlayers, model_path, df):
     model.summary()
 
     # cp = ModelCheckpoint(model_path, save_best_only=True, monitor='val_loss', verbose=1)
-    es = EarlyStopping(monitor='val_loss', verbose=0, patience=1000, restore_best_weights=True)
+    es = EarlyStopping(monitor='val_loss', verbose=verbose, patience=1000, restore_best_weights=True)
     model.compile(loss=MeanSquaredError(), optimizer=Adam(learning_rate=lr),
                   metrics=[MeanAbsolutePercentageError()])
 
     history = model.fit(x_train1, y_train1, validation_data=(x_val1, y_val1), epochs=ep, callbacks=[es],
-                        verbose=2)
+                        verbose=verbose)
     model.save(path + 'model.h5')
     with open(path + "means.json", "w") as write_file:
         json.dump(means, write_file, indent=4)
