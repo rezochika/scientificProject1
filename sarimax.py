@@ -1,15 +1,15 @@
-import sys
-from datetime import datetime
 import math
 import pickle
+import sys
+from datetime import datetime
 
 import absl.logging
 import matplotlib.pylab as plt
 import pandas as pd
 from pmdarima import auto_arima
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 import sqlconnect
+
 absl.logging.set_verbosity(absl.logging.ERROR)
 if not sys.warnoptions:
     import warnings
@@ -34,6 +34,8 @@ for arg in sys.argv:
     elif arg == 'bi=1':
         Bi = True
 print(datetime.now())
+
+
 ws = 3
 df, df1 = sqlconnect.getdatafromsql()
 df['DT'] = pd.to_datetime(df['DT'], infer_datetime_format=True)

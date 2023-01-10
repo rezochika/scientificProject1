@@ -6,13 +6,14 @@ from keras.callbacks import EarlyStopping
 from keras.engine.input_layer import InputLayer
 from keras.layers import LSTM, Dense, Bidirectional
 from keras.losses import MeanSquaredError
-from keras.metrics import RootMeanSquaredError, MeanAbsolutePercentageError
+from keras.metrics import MeanAbsolutePercentageError
 from keras.optimizer_v2.adam import Adam
+
 import US
 
 
 def build_dnn(ws, lr, ep, bi, dnnlayers, model_path, df):
-    path = model_path + 'LSTM_layers_'+str(dnnlayers)
+    path = '{0}LSTM_layers_{1}'.format(model_path, dnnlayers)
     if bi: path = path+'_Bidirectional'
     path += '/'
     df['Troloff2'] = df['Troloff'] ** 2

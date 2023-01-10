@@ -4,6 +4,8 @@ import absl.logging
 import warnings
 import sqlconnect
 from Models.dnn import build_dnn
+from Models.ols import build_ols
+from Models.sarimax import build_sarimax
 
 absl.logging.set_verbosity(absl.logging.ERROR)
 if not sys.warnoptions:
@@ -20,3 +22,5 @@ build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=64, model_path=modelPath, df=
 build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=64, model_path=modelPath, df=df.copy())
 build_dnn(ws=ws, lr=lr, ep=ep, bi=True, dnnlayers=128, model_path=modelPath, df=df.copy())
 build_dnn(ws=ws, lr=lr, ep=ep, bi=False, dnnlayers=128, model_path=modelPath, df=df.copy())
+build_sarimax(model_path=modelPath, df=df.copy())
+build_ols(model_path=modelPath, df=df.copy())

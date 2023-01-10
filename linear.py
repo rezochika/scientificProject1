@@ -18,15 +18,15 @@ ForecastData = pd.concat([TestData[len(TestData) - ws:], df1.loc[:, drivers]])
 
 columns = TestData.columns.tolist()
 
-lin_model = LinearRegression()
+model = LinearRegression()
 X = TestData[[c for c in columns if c not in ['c']]]
 y = TestData['c']
 
-lin_model.fit(X, y)
-print(lin_model.score(X, y))
-print(lin_model.coef_)
-print(lin_model.intercept_)
-print(lin_model.score(X, y))
+model.fit(X, y)
+print(model.score(X, y))
+print(model.coef_)
+print(model.intercept_)
+print(model.score(X, y))
 for r in range(ws, len(ForecastData)):
     if math.isnan(float(ForecastData['c7'][r])): ForecastData['c7'][r] = ForecastData['c'][r - 7]
     if math.isnan(float(ForecastData['cy'][r])): ForecastData['cy'][r] = ForecastData['c'][r - 1]
@@ -34,7 +34,7 @@ for r in range(ws, len(ForecastData)):
     ForecastData['dcy'][r] = 0 if dcy < 1.3 else dcy
     # if math.isnan(float(ForecastData['c'][r])):
     X1 = ForecastData[[c for c in columns if c not in ['c']]][r - 1:r]
-    yP = lin_model.predict(X1)
+    yP = model.predict(X1)
     ForecastData['c'][r] = yP[len(yP) - 1]
 
 # print(ForecastData)
