@@ -1,0 +1,7 @@
+{
+    "epoch": 72.0,
+    "loss": 0.0017305095680058002,
+    "mean_absolute_percentage_error": 27.286359786987305,
+    "val_loss": 0.0024475553072988987,
+    "val_mean_absolute_percentage_error": 1.4925978183746338
+}
